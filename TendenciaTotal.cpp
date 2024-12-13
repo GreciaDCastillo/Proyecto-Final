@@ -79,7 +79,7 @@ void menu_Inicio(vector<empleado> &registro_empleado);
 void imprimirMenuEmpleado(const empleado &empleado_activo);
 void imprimirMenuSubmenu();
 void menuEmpleado(empleado &empleado_activo);
-void SubmenuEmpleado(empleado &empleado_activo, vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario);
+void SubmenuEmpleado(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario, vector<pedidos> &ventas);
 void cargarCatalogo(vector<catalogo_ropa> &catalogo);
 void verCatalogo(vector<catalogo_ropa> &catalogo);
 void guardarCatalogo(vector<catalogo_ropa> &catalogo);
@@ -161,7 +161,7 @@ void registroEmpleado(vector<empleado> &registro_empleado) {
 
     registro_empleado.push_back(empleado_aux);
 
-    ofstream archivo_empleado("registro_empleado.txt", ios::app);
+    ofstream archivo_empleado("registro_empleado.txt", ios::out | ios::app);
     if (!archivo_empleado.is_open()) {
         cout << "No se pudo abrir el archivo para guardar el registro." << endl;
         return;
@@ -182,7 +182,7 @@ void registroEmpleado(vector<empleado> &registro_empleado) {
 
 // Cargar empleados desde archivo
 void cargarEmpleados(vector<empleado> &registro_empleado) {
-    ifstream archivo_empleado("registro_empleado.txt");
+    ifstream archivo_empleado("registro_empleado.txt", ios::in);
     if (!archivo_empleado.is_open()) {
         return;
     }
@@ -268,7 +268,7 @@ void imprimirMenuSubmenu() {
     cout << "\n\n\nOpción: ";
 }
 
-void SubmenuEmpleado(empleado &empleado_activo, vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario) {
+void SubmenuEmpleado(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario, vector<pedidos> &ventas) {
     int opcion;
     do {
         imprimirMenuSubmenu();
@@ -326,7 +326,7 @@ void menuEmpleado(empleado &empleado_activo) {
                 break;
             case 3:
                 cout << "Planificación antes de la jornada" << endl;
-                SubmenuEmpleado(empleado_activo, catalogo, inventario); // Llamada a la función SubmenuEmpleado
+                SubmenuEmpleado(catalogo, inventario, ventas); // Llamada a la función SubmenuEmpleado
                 break;
             case 4:
                 cout << "Ver historial de compras" << endl;
@@ -393,7 +393,7 @@ void verInventario(const vector<inventario_ropa> &inventario) {
 
 // Leer catálogo desde archivo
 void cargarCatalogo(vector<catalogo_ropa> &catalogo) {
-    ifstream archivo_catalogo("catalogo.txt");
+    ifstream archivo_catalogo("catalogo.txt", ios::in);
     
     if (!archivo_catalogo.is_open()) {
         cout << "Error al abrir el archivo de catálogo." << endl;
@@ -463,13 +463,20 @@ void cargarInventario(vector<inventario_ropa> &inventario) {
         getline(ss, cantidad, ';');
         getline(ss, articulo.temporada, ';');
 
-        articulo.costo_unitario = stod(costo);
-        articulo.cantidad = stoi(cantidad);
+        try {
+            articulo.costo_unitario = stod(costo);
+            articulo.cantidad = stoi(cantidad);
+        } catch (...) {
+            cout << "Error al leer línea del inventario: " << linea << endl;
+            continue;
+        }
 
         inventario.push_back(articulo);
     }
+
     archivo_inventario.close();
 }
+
 
 void guardarInventario(const vector<inventario_ropa> &inventario) {
     ofstream archivo_inventario("inventario.txt");
@@ -479,6 +486,11 @@ void guardarInventario(const vector<inventario_ropa> &inventario) {
     }
 
     for (const auto &articulo : inventario) {
+        if (articulo.codigo_ropa.empty()) {
+            cout << "Error: Código vacío encontrado en inventario." << endl;
+            continue;
+        }
+
         archivo_inventario << articulo.codigo_ropa << ";"
                            << articulo.categoria << ";"
                            << articulo.marca << ";"
@@ -487,29 +499,45 @@ void guardarInventario(const vector<inventario_ropa> &inventario) {
                            << articulo.cantidad << ";"
                            << articulo.temporada << endl;
     }
+
     archivo_inventario.close();
-    }
-void comprarArticulos(vector<inventario_ropa> &inventario, vector<pedidos> &ventas, vector<catalogo_ropa> &catalogo){
+}
+
+void comprarArticulos(vector<inventario_ropa> &inventario, vector<pedidos> &ventas, vector<catalogo_ropa> &catalogo) {
     pedidos nuevo_pedido;
+    bool encontrado = false;
 
     cout << "--------------------------------------------" << endl;
     cout << "Comprar artículos" << endl;
     cout << "--------------------------------------------" << endl;
 
-    cout << "Ingrese el código de la prenda que desea comprar: " << endl;
+    cout << "Ingrese el código de la prenda que desea comprar: ";
     cin.ignore();
     getline(cin, nuevo_pedido.codigo_pedido);
 
-    for (int i = 0; i < catalogo.size(); i++) {
-        if (catalogo[i].codigo_ropa == nuevo_pedido.codigo_pedido) {
-            cout << "Ingrese la cantidad de prendas que desea comprar: " << endl;
+    for (auto &articulo_catalogo : catalogo) {
+        if (articulo_catalogo.codigo_ropa == nuevo_pedido.codigo_pedido) {
+            encontrado = true;
+
+            cout << "Ingrese la cantidad de prendas que desea comprar: ";
             cin >> nuevo_pedido.cantidad;
 
-            nuevo_pedido.total = catalogo[i].precio_unitario * nuevo_pedido.cantidad;
+            if (nuevo_pedido.cantidad <= 0) {
+                cout << "Cantidad inválida. Compra cancelada." << endl;
+                return;
+            }
+
+            nuevo_pedido.total = articulo_catalogo.precio_unitario * nuevo_pedido.cantidad;
+
+            // Actualizar inventario
+            for (auto &articulo_inventario : inventario) {
+                if (articulo_inventario.codigo_ropa == nuevo_pedido.codigo_pedido) {
+                    articulo_inventario.cantidad += nuevo_pedido.cantidad;
+                    break;
+                }
+            }
+
             ventas.push_back(nuevo_pedido);
-
-            inventario[i].cantidad += nuevo_pedido.cantidad;
-
             guardarInventario(inventario);
 
             ofstream archivo_pedidos("pedidos.txt", ios::app);
@@ -518,15 +546,20 @@ void comprarArticulos(vector<inventario_ropa> &inventario, vector<pedidos> &vent
                                 << nuevo_pedido.cantidad << ";"
                                 << nuevo_pedido.total << endl;
                 archivo_pedidos.close();
+            } else {
+                cout << "Error al guardar el pedido en el archivo." << endl;
             }
+
             cout << "Artículos comprados exitosamente." << endl;
-            return;
-        } else {
-            cout << "Prenda no encontrada en el catálogo." << endl;
             return;
         }
     }
+
+    if (!encontrado) {
+        cout << "Prenda no encontrada en el catálogo." << endl;
+    }
 }
+
 
 // Función principal
 int main() {
