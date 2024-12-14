@@ -79,7 +79,7 @@ void menu_Inicio(vector<empleado> &registro_empleado);
 void imprimirMenuEmpleado(const empleado &empleado_activo);
 void imprimirMenuSubmenu();
 void menuEmpleado(empleado &empleado_activo);
-void SubmenuEmpleado(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario, vector<pedidos> &ventas);
+void SubmenuEmpleado(vector<catalogo_ropa> catalogo, vector<inventario_ropa> inventario, vector<pedidos> ventas);
 void cargarCatalogo(vector<catalogo_ropa> &catalogo);
 void verCatalogo(vector<catalogo_ropa> &catalogo);
 void guardarCatalogo(vector<catalogo_ropa> &catalogo);
@@ -88,6 +88,15 @@ void verInventario(vector<inventario_ropa> &catalogo);
 void cargarInventario(vector<inventario_ropa> &catalogo);
 void comprarArticulos(vector<inventario_ropa> &inventario, vector<pedidos> &ventas, vector<catalogo_ropa> &catalogo);
 void colocarArticulos(vector<catalogo_ropa> &catalogo, vector<pedidos> &ventas, vector<inventario_ropa> &inventario);
+
+// Función principal
+int main() {
+    cargarEmpleados(registro_empleado);
+    cargarInventario(inventario);
+    cargarCatalogo(catalogo);
+    menu_Inicio(registro_empleado);
+    return 0;
+}
 
 // Primer Menu
 void inicio() {
@@ -268,7 +277,7 @@ void imprimirMenuSubmenu() {
     cout << "\n\n\nOpción: ";
 }
 
-void SubmenuEmpleado(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario, vector<pedidos> &ventas) {
+void SubmenuEmpleado(vector<catalogo_ropa> catalogo, vector<inventario_ropa> inventario, vector<pedidos> ventas) {
     int opcion;
     do {
         imprimirMenuSubmenu();
@@ -538,7 +547,7 @@ void comprarArticulos(vector<inventario_ropa> &inventario, vector<pedidos> &vent
             }
 
             ventas.push_back(nuevo_pedido);
-            guardarInventario(inventario);
+            //guardarInventario(inventario);
 
             ofstream archivo_pedidos("pedidos.txt", ios::app);
             if (archivo_pedidos.is_open()) {
@@ -559,14 +568,3 @@ void comprarArticulos(vector<inventario_ropa> &inventario, vector<pedidos> &vent
         cout << "Prenda no encontrada en el catálogo." << endl;
     }
 }
-
-
-// Función principal
-int main() {
-    cargarEmpleados(registro_empleado);
-    cargarInventario(inventario);
-    cargarCatalogo(catalogo);
-    menu_Inicio(registro_empleado);
-    return 0;
-}
-
