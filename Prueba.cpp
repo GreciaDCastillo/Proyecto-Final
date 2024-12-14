@@ -3,7 +3,10 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cstdlib>
+#include <ctime>
 
+ 
 using namespace std;
 
 struct empleado {
@@ -60,9 +63,10 @@ void cargarEmpleados(vector<empleado> &registro_empleado);
 void inicio();
 void menu_Inicio(vector<empleado> &registro_empleado);
 void imprimirMenuEmpleado(const empleado &empleado_activo);
-void imprimirMenuEmpleado2(const cliente &cliente_activo);
 void menuEmpleado(empleado &empleado_activo);
-void SubmenuEmpleado(cliente cliente_activo);
+void SubmenuEmpleado();
+void menuFinJornada();
+void CicloDiario();
 
 // Primer Menu
 void inicio() {
@@ -207,9 +211,57 @@ void inicioSesionEmpleado(vector<empleado> &registro_empleado) {
         }
     }
     if (!encontrado) {
-        cout << "Contraseña Incorrecta." << endl;
+        cout << "Contraseña Incorrecta." << endl; 
     }
 }
+
+void delay (int segundos) {
+    clock_t start_time = clock();
+    while (clock() < start_time + segundos * CLOCKS_PER_SEC/1000) {}
+}
+void mostrarBarraProgreso(int duracion) {
+    const int total = 50;
+    int intervalo = duracion / total;
+
+    cout << "Progreso: [";
+    for (int i = 0; i < total; ++i) {
+        cout << "#";
+        cout.flush();
+        delay(intervalo);
+    } 
+    cout << "] 100%" << endl;
+    
+}
+
+void CicloDiario(){
+    cout << "Ciclo Diario" << endl;
+    mostrarBarraProgreso(5000);
+
+    cout << "\nDia Finalizado..." << endl;
+
+    cout << "--------------------------------------------" << endl;
+    cout << "Quisiera pasar al final de la jornada?" << endl;
+    cout << "--------------------------------------------" << endl;
+    cout << "\t  1.- Si" << endl;
+    cout << "\t  2.- No" << endl;
+    cout << "--------------------------------------------" << endl;
+    cout << "\n\n\nOpción: ";
+
+    int opcion;
+    cin >> opcion;
+
+    if (opcion == 1) {
+        menuFinJornada();
+    }
+    else if (opcion == 2) {
+        cout << "Gracias por usar Tendencia Total..." << endl;
+    }
+    else {
+        cout << "Opcion no valida" << endl;
+    }
+
+}
+
 
 void imprimirMenuEmpleado(const empleado &empleado_activo){
     cout << "--------------------------------------------" << endl;
@@ -243,7 +295,20 @@ void imprimirMenuEmpleado(const empleado &empleado_activo){
     cout << "\n\n\nOpción: ";
 }
 
-void SubmenuEmpleado(empleado empleado_activo) {
+void ImprimirmenuFinJornada(){
+    cout << "--------------------------------------------" << endl;
+    cout << "\tFin de Jornada" << endl;
+    cout << "--------------------------------------------" << endl;
+    cout << "\t  1.- Ver Reportes" << endl;
+    cout << "\t  2.- Logros del dia" << endl;
+    cout << "\t  3.- Comprar artículos" << endl;
+    cout << "\t  5.- Mis pedidos" << endl;
+    cout << "\t  6.- Siguiente dia" << endl;
+    cout << "--------------------------------------------" << endl;
+    cout << "\n\n\nOpción: ";
+}
+
+void SubmenuEmpleado() {
     int opcion;
     do {
         imprimirMenuSubmenu();
@@ -300,17 +365,48 @@ void menuEmpleado(empleado &empleado_activo) {
                 cout << "Instrucciones" << endl;
                 break;
             case 3:
-                cout << "Planificación antes de la jornada" << endl;
-                SubmenuEmpleado(empleado_activo); // Llamada corregida
+                //cout << "Planificación antes de la jornada" << endl;
+                SubmenuEmpleado(); // Llamada corregida
                 break;
             case 4:
                 cout << "Ver historial de compras" << endl;
                 break;
             case 5:
-                cout << "Iniciar jornada" << endl;
+                //cout << "Iniciar jornada" << endl;
+                CicloDiario();
                 break;
             case 6:
                 cout << "Cerrando sesión..." << endl;
+                break;
+            default:
+                cout << "Opción no válida." << endl;
+                break;
+        }
+    } while (opcion != 6);
+}
+void menuFinJornada(){
+    int opcion;
+    do {
+        ImprimirmenuFinJornada();
+        cin >> opcion;
+        switch (opcion) {
+            case 1:
+                cout << "Ver reportes" << endl;
+                break;
+            case 2:
+                cout << "Logros del dia" << endl;
+                break;
+            case 3:
+                cout << "Comprar artículos" << endl;
+                break;
+            case 4:
+                cout << "Mis pedidos" << endl;
+                break;
+            case 5:
+                cout << "Siguiente dia" << endl;
+                break;
+            case 6: 
+                cout << "Volviendo al menú principal..." << endl;
                 break;
             default:
                 cout << "Opción no válida." << endl;
