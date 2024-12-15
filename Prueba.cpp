@@ -523,8 +523,10 @@ void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, 
 
         for (auto &producto : catalogo) {
             // Probabilidad de compra según tipo de cliente
-            double probabilidad = cliente.tipo_cliente == "Raro" ? 0.8 : 
-                                   cliente.tipo_cliente == "Frecuente" ? 0.5 : 0.3;
+            double probabilidad = 
+                                   cliente.tipo_cliente == "Premium" ? 0.9 : // 90%
+                                   cliente.tipo_cliente == "Raro" ? 0.8 : // 80%
+                                   cliente.tipo_cliente == "Frecuente" ? 0.5 : 0.3; // 30%
             
             if ((rand() % 100) < (probabilidad * 100) && cliente.presupuesto >= producto.precio_unitario) {
                 int cantidadCompra = min(rand() % 3 + 1, producto.cantidad); // Compra de 1 a 3 unidades
