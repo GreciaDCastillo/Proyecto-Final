@@ -413,7 +413,7 @@ void cargarCatalogo(vector<catalogo_ropa> &catalogo) {
     while (getline(archivo_catalogo, linea)) {
         stringstream ss(linea);
         catalogo_ropa articulo;
-        string precio, cantidad;
+        string precio, cantidad; 
 
         getline(ss, articulo.codigo_ropa, ';');
         getline(ss, articulo.categoria, ';');
