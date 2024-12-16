@@ -14,6 +14,7 @@ struct empleado {
     int codigo_empleado;
     string nombre_empleado;
     string apellido_empleado;
+    string usuario_empleado;
     int edad;
     string contrasenia;
     string correo;
@@ -102,6 +103,8 @@ void SubmenuEmpleado();
 void menuFinJornada();
 void CicloDiario(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo);
 void VerCatalogo(vector<catalogo_ropa> catalogo);
+void cargarCatalogo(vector<catalogo_ropa> &catalogo);
+void guardarCatalogo(const vector<catalogo_ropa> &catalogo);
 void VerInventario(vector<inventario_ropa> inventario);
 void cargarInventario(vector<inventario_ropa> &inventario);
 void guardarInventario(const vector<inventario_ropa> &inventario);
@@ -111,7 +114,6 @@ void VerHistorialCompras();
 void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario);
 void GenerarCliente(vector<cliente> &clientes, int cantidad_clientes);
 void GenerarEvento(evento &nuevoEvento);
-
 void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, evento eventoDelDia);
 void verReportes(const vector<cliente> &clientes,vector<catalogo_ropa> &catalogo);
 
@@ -177,6 +179,9 @@ void registroEmpleado(vector<empleado> &registro_empleado) {
     cout << "Ingrese su apellido: ";
     getline(cin, empleado_aux.apellido_empleado);
 
+    cout << "Ingrese su usuario: ";
+    getline(cin, empleado_aux.usuario_empleado);
+
     cout << "Ingrese su edad: ";
     cin >> empleado_aux.edad;
 
@@ -201,6 +206,7 @@ void registroEmpleado(vector<empleado> &registro_empleado) {
     archivo_empleado << empleado_aux.codigo_empleado << ";"
                      << empleado_aux.nombre_empleado << ";"
                      << empleado_aux.apellido_empleado << ";"
+                     << empleado_aux.usuario_empleado << ";"
                      << empleado_aux.edad << ";"
                      << empleado_aux.contrasenia << ";"
                      << empleado_aux.correo << ";"
@@ -227,6 +233,7 @@ void cargarEmpleados(vector<empleado> &registro_empleado) {
         getline(ss, codigo, ';');
         getline(ss, empleado_aux.nombre_empleado, ';');
         getline(ss, empleado_aux.apellido_empleado, ';');
+        getline(ss, empleado_aux.usuario_empleado, ';');
         getline(ss, edad, ';');
         getline(ss, empleado_aux.contrasenia, ';');
         getline(ss, empleado_aux.correo, ';');
@@ -247,14 +254,17 @@ void inicioSesionEmpleado(vector<empleado> &registro_empleado) {
     cout << "\t Iniciar Sesion" << endl;
     cout << "--------------------------------------------" << endl;
 
-    string contrasenia;
-    cout << "\nIngrese su contrasenia: ";
+    string contrasenia, usuario;
+    cout << "\nIngrese su usuario: ";
     cin.ignore();
+    getline(cin, usuario);
+
+    cout << "Ingrese su contrasenia: ";
     getline(cin, contrasenia);
 
     bool encontrado = false;
     for (auto &empleado_activo : registro_empleado) { // Cambiado a referencia modificable
-        if (empleado_activo.contrasenia == contrasenia) {
+        if (empleado_activo.contrasenia == contrasenia && empleado_activo.usuario_empleado == usuario) {
             encontrado = true;
 
             // Llama al menú del empleado autenticado
@@ -263,7 +273,7 @@ void inicioSesionEmpleado(vector<empleado> &registro_empleado) {
         }
     }
     if (!encontrado) {
-        cout << "Contraseña Incorrecta." << endl; 
+        cout << "\nContrasenia o Usuario Incorrecta." << endl; 
     }
 }
 
@@ -288,6 +298,36 @@ void VerCatalogo(vector<catalogo_ropa> catalogo){
         cout << "--------------------------------------------" << endl;
     }
 }
+void cargarCatalogo(vector<catalogo_ropa> &catalogo) {
+    ifstream archivo("catalogo.txt");
+    if (!archivo) {
+        return; // Si no existe el archivo, no hacemos nada.
+    }
+
+    catalogo_ropa item;
+    while (archivo >> item.codigo_ropa >> item.categoria >> item.marca >> item.talla >> 
+                  item.precio_unitario >> item.cantidad >> item.temporada) {
+        catalogo.push_back(item);
+    }
+
+    archivo.close();
+}
+
+void guardarCatalogo(const vector<catalogo_ropa> &catalogo) {
+    ofstream archivo("catalogo.txt", ios::out); // Sobrescribe siempre
+    if (!archivo) {
+        return;
+    }
+
+    for (const auto &item : catalogo) {
+        archivo << item.codigo_ropa << " " << item.categoria << " " 
+                << item.marca << " " << item.talla << " " 
+                << item.precio_unitario << " " << item.cantidad << " " 
+                << item.temporada << "\n";
+    }
+
+    archivo.close();
+}
 
 void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario) {
     string codigo;
@@ -306,7 +346,11 @@ void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &i
                                        cantidad, item.temporada};
                 catalogo.push_back(nuevo);
                 item.cantidad -= cantidad;
-                cout << "Producto agregado al catalogo.\n";
+                cout << "Producto agregado al catálogo.\n";
+
+                // Guardar el catálogo e inventario actualizados
+                guardarCatalogo(catalogo);
+                guardarInventario(inventario);
                 return;
             } else {
                 cout << "Cantidad insuficiente en el inventario.\n";
@@ -314,7 +358,8 @@ void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &i
             }
         }
     }
-    cout << "Codigo no encontrado en el inventario.\n";
+
+    cout << "Código no encontrado en el inventario.\n";
     guardarInventario(inventario);
 }
 
@@ -364,6 +409,7 @@ void QuitarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &in
         }
     }
     cout << "Código no encontrado en el inventario.\n";
+    guardarCatalogo(catalogo);
     guardarInventario(inventario);
 }
 
@@ -405,7 +451,7 @@ void cargarInventario(vector<inventario_ropa> &inventario) {
 }
 
 void guardarInventario(const vector<inventario_ropa> &inventario){
-    ofstream archivo("inventario.txt", ios::out | ios::app);
+    ofstream archivo("inventario.txt", ios::out);
     if (!archivo) {
         return;
     }
@@ -633,6 +679,7 @@ void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, 
                     }
                 }
             }
+            guardarCatalogo(catalogo);
         }
     }
 }
@@ -862,6 +909,7 @@ void menuEmpleado(empleado &empleado_activo) {
                 cout << "--------------------------------------------" << endl;
                 cout << "\t\tNombre: " << empleado_activo.nombre_empleado << endl;
                 cout << "\t\tApellido: " << empleado_activo.apellido_empleado << endl;
+                cout << "\t\tUsuario: " << empleado_activo.usuario_empleado << endl;
                 cout << "\t\tEdad: " << empleado_activo.edad << endl;
                 cout << "\t\tCorreo: " << empleado_activo.correo << endl;
                 cout << "\t\tTelefono: " << empleado_activo.telefono << endl;
