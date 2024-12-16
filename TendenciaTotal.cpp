@@ -53,6 +53,7 @@ struct inventario_ropa {
     string marca;
     string talla;
     double costo_unitario;
+     double porcentaje_ganancia = 20; //10% 20% 30# DE GANANCIAS..margen de ganancia (en porcentaje)
     int cantidad; // Cantidad en el inventario general.
     string temporada;
 };
@@ -292,7 +293,7 @@ void VerCatalogo(vector<catalogo_ropa> catalogo){
         cout << "Categoria: " << catalogo_ropa.categoria << endl;
         cout << "Marca: " << catalogo_ropa.marca << endl;
         cout << "Talla: " << catalogo_ropa.talla << endl;
-        cout << "Precio Unitaraio: " << catalogo_ropa.precio_unitario << endl;
+        cout << "Precio Unitario: " << catalogo_ropa.precio_unitario << endl;
         cout << "Cantidad Disponible: " << catalogo_ropa.cantidad << endl;
         cout << "Temporada: " << catalogo_ropa.temporada << endl;
         cout << "--------------------------------------------" << endl;
@@ -342,11 +343,11 @@ void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &i
         if (item.codigo_ropa == codigo) {
             if (item.cantidad >= cantidad) {
                 catalogo_ropa nuevo = {item.codigo_ropa, item.categoria, item.marca, 
-                                       item.talla, item.costo_unitario * 1.5, 
+                                       item.talla, item.costo_unitario / (1-(item.porcentaje_ganancia/100)),
                                        cantidad, item.temporada};
                 catalogo.push_back(nuevo);
                 item.cantidad -= cantidad;
-                cout << "Producto agregado al catálogo.\n";
+                cout << "Producto agregado al catalogo.\n";
 
                 // Guardar el catálogo e inventario actualizados
                 guardarCatalogo(catalogo);
@@ -379,13 +380,14 @@ void QuitarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &in
                     for (auto &item : inventario) {
                              if (item.codigo_ropa == codigo) {
                                  item.cantidad += cantidad;
+                                 item.costo_unitario = item.costo_unitario *(1-(item.porcentaje_ganancia/100));
                         }
                     }
                     for (auto it = catalogo.begin(); it != catalogo.end(); ++it) {
                         if (it->codigo_ropa == codigo) {
                             catalogo.erase(it);
                             
-                            cout << "Articulo eliminado exitosamente.\n";
+                            cout << "Articulo quitado del catalogo exitosamente.\n";
                             return;
                         }
                     }
@@ -395,6 +397,7 @@ void QuitarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &in
                     for (auto &item : inventario) {
                              if (item.codigo_ropa == codigo) {
                                  item.cantidad += cantidad;
+                                 item.costo_unitario = item.costo_unitario *(1-(item.porcentaje_ganancia/100));
                         }
                     }
 
@@ -411,6 +414,33 @@ void QuitarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &in
     cout << "Código no encontrado en el inventario.\n";
     guardarCatalogo(catalogo);
     guardarInventario(inventario);
+}
+void ajustarPrecios(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario) {
+    string codigo;
+    double nuevo_porcentaje;
+    
+    cout << "Ingrese el codigo del producto: ";
+    cin >> codigo;
+    cout << "El margen por defecto es del 20%";
+    cout << "Ingrese el nuevo margen de ganancia (solo numero) : ";
+    cin >> nuevo_porcentaje;
+
+    for (auto &item_catalogo : catalogo) {
+        if (item_catalogo.codigo_ropa == codigo) {
+            // Buscar el producto en el inventario para obtener el costo unitario
+            for (auto &item_inventario : inventario) {
+                if (item_inventario.codigo_ropa == codigo) {
+                    item_catalogo.precio_unitario = item_inventario.costo_unitario / (1 - (nuevo_porcentaje / 100));
+                    cout << "El precio del producto se ha actualizado.\n";
+                    return;
+                }
+            }
+            cout << "Producto no encontrado en el inventario.\n";
+            return; // Salir si no se encuentra en el inventario
+        }
+    }
+
+    cout << "Código de producto no encontrado en el catálogo.\n";
 }
 
 void VerInventario(vector<inventario_ropa> inventario){
@@ -828,6 +858,7 @@ void imprimirMenuSubmenu() {
     cout << "\t  4.- Colocar articulos" << endl;  // agregar artaculos del inventario al catalogo
     cout << "\t  5.- Mis pedidos" << endl; //??? similar o igual a stock, muestra historial de compras a nuestro proveedor
     cout << "\t  6.- Quitar del catalogo" << endl;
+    cout << "\t  7.- Ajustar precios" << endl;
     cout << "\t  7.- Volver al menu principal" << endl;
     cout << "--------------------------------------------" << endl;
     cout << "\n\nOpcion: ";
@@ -886,6 +917,10 @@ void SubmenuEmpleado() {
                 system("pause");
                 break;
             case 7:
+                ajustarPrecios(catalogo, inventario);
+                system("pause");
+                break; 
+            case 8:
                 cout << "Volviendo al menu principal..." << endl;
                 system("pause");
                 break;
@@ -894,7 +929,7 @@ void SubmenuEmpleado() {
                 system("pause");
                 break;
         }
-    } while (opcion != 7);
+    } while (opcion != 8);
 }
 
 void menuEmpleado(empleado &empleado_activo) {
