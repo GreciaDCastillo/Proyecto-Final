@@ -159,7 +159,14 @@ void menu_Inicio(vector<empleado> &registro_empleado) {
                 break;
             case 3:
                 limpiarPantalla();
-                //cout << "Creditos" << endl;
+                cout << "--------------------------------------------" << endl;
+                cout << "\tCreditos" << endl;
+                cout << "--------------------------------------------" << endl;
+
+                cout << "\n\n\n\tTendencia Total fue desarrollada por:" << endl;
+                cout << "\t\tGrecia Daniela Castillo Ali" << endl;
+                cout << "\t\tDaniela Alana Yampasi Sandi" << endl;
+                                                                                                                                                                                                                                                                                                                                             
                 system("pause");
                 break;
             case 4:
