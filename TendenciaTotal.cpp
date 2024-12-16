@@ -118,6 +118,14 @@ void GenerarEvento(evento &nuevoEvento);
 void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, evento eventoDelDia);
 void verReportes(const vector<cliente> &clientes,vector<catalogo_ropa> &catalogo);
 
+void limpiarPantalla() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
 // Primer Menu
 void inicio() {
     cout << "--------------------------------------------" << endl;
@@ -140,15 +148,18 @@ void menu_Inicio(vector<empleado> &registro_empleado) {
         cin >> opcion;
         switch (opcion) {
             case 1:
+                limpiarPantalla();
                 inicioSesionEmpleado(registro_empleado);
                 system("pause");
                 break;
             case 2:
+                limpiarPantalla();
                 registroEmpleado(registro_empleado);
                 system("pause");
                 break;
             case 3:
-                cout << "Creditos" << endl;
+                limpiarPantalla();
+                //cout << "Creditos" << endl;
                 system("pause");
                 break;
             case 4:
@@ -880,35 +891,35 @@ void ImprimirmenuFinJornada(){
 void SubmenuEmpleado() {
     int opcion;
     do {
+        limpiarPantalla();
         imprimirMenuSubmenu();
         cin >> opcion;
         switch (opcion) {
             case 1:
-                //cout << "Ver catálogo" << endl;
+                limpiarPantalla();
                 VerCatalogo(catalogo);
                 system("pause");
                 break;
             case 2:
-                //cout << "Ver inventario" << endl;
+                limpiarPantalla();
                 VerInventario(inventario);
                 system("pause");
                 // Agregar lógica específica aquí
                 break;
             case 3:
-                //cout << "Comprar artículos" << endl;
+                limpiarPantalla();
                 HacerPedido(inventario, historial_compras, presupuesto);
                 system("pause");
                 // Agregar lógica específica aquí
                 break;
             case 4:
-                //cout << "Colocar artículos" << endl;
+                limpiarPantalla();
                 AgregarCatalogo(catalogo, inventario);
                 system("pause");
                 // Agregar lógica específica aquí
                 break;
             case 5:
-                //cout << "Mis pedidos" << endl;
-                // Agregar lógica específica aquí
+                limpiarPantalla();
                 VerHistorialCompras();
                 system("pause");
                 break;
@@ -917,6 +928,7 @@ void SubmenuEmpleado() {
                 system("pause");
                 break;
             case 7:
+                limpiarPantalla();
                 ajustarPrecios(catalogo, inventario);
                 system("pause");
                 break; 
@@ -935,10 +947,12 @@ void SubmenuEmpleado() {
 void menuEmpleado(empleado &empleado_activo) {
     int opcion;
     do {
+        limpiarPantalla();
         imprimirMenuEmpleado(empleado_activo);
         cin >> opcion;
         switch (opcion) {
             case 1:
+                limpiarPantalla();
                 cout << "\n\n--------------------------------------------" << endl;
                 cout << "\t\tPerfil" << endl;
                 cout << "--------------------------------------------" << endl;
@@ -952,6 +966,7 @@ void menuEmpleado(empleado &empleado_activo) {
                 system("pause");
                 break;
             case 2:
+                limpiarPantalla();
                 cout << "\n\n--------------------------------------------" << endl; 
                 cout <<"\n \tInstrucciones\t"<< endl;
                 cout << "\n--------------------------------------------" << endl;
@@ -963,26 +978,28 @@ void menuEmpleado(empleado &empleado_activo) {
                 system("pause");
                 break;
             case 3:
-                //cout << "Planificación antes de la jornada" << endl;
+                limpiarPantalla();
                 SubmenuEmpleado(); // Llamada corregida
                 system("pause");
                 break;
             case 4:
-                //cout << "Ver historial de compras" << endl;
+                limpiarPantalla();
                 VerHistorialCompras();
                 system("pause");
                 break;
             case 5:
-                //cout << "Iniciar jornada" << endl;
+                limpiarPantalla();
                 CicloDiario(clientes, catalogo);
                 system("pause");
                 break;
             case 6:
+                limpiarPantalla();
                 cout << "Cerrando sesion..." << endl;
                 contador_jornadas = 0;
                 system("pause");
                 break;
             default:
+                limpiarPantalla();
                 cout << "Opcion no valida." << endl;
                 system("pause");
                 break;
@@ -993,15 +1010,17 @@ void menuFinJornada(){
 
     int opcion;
     do {
+        limpiarPantalla();
         ImprimirmenuFinJornada();
         cin >> opcion;
         switch (opcion) {
             case 1:
-                //cout << "Reportes del dia" << endl;
-                    verReportes(clientes , catalogo);
+                limpiarPantalla();
+                verReportes(clientes , catalogo);
                 system("pause");
                 break;
             case 2:
+                limpiarPantalla();
                 cout << "\n\n--------------------------------------------" << endl; 
                 cout << "Logros y Metas" << endl;
                 cout << "--------------------------------------------" << endl; 
@@ -1019,22 +1038,24 @@ void menuFinJornada(){
                 system("pause");
                 break;
             case 3:
-                //cout << "Comprar articulos" << endl;
+                limpiarPantalla();
                 HacerPedido(inventario, historial_compras, presupuesto);
                 system("pause");
                 break;
             case 4:
-                //cout << "Mis pedidos" << endl;
+                limpiarPantalla();
                 VerHistorialCompras();
                 system("pause");
                 break;
             case 5:
+                limpiarPantalla();
                 contador_jornadas++;
                 cout << "Jornada -" << contador_jornadas << "- finalizada" << endl;
                 cout << "Pasando a la siguiente dia..." << endl;
                 
                 break;
             default:
+                limpiarPantalla();
                 cout << "Opcion no valida." << endl;
                 system("pause");
                 break;
