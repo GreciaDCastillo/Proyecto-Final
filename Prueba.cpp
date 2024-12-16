@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
 
  
 using namespace std;
@@ -23,7 +24,8 @@ struct cliente { //para archivo de texto
     string tipo_cliente;
     int numero_visitas;
     double presupuesto;
-    double total_gastado; //agregado
+    double total_gastado;
+    int total_productos; //agregado
 };
 
 struct historial_compras { //para archivo de texto
@@ -41,6 +43,7 @@ struct catalogo_ropa {
     double precio_unitario;
     int cantidad; // Cantidad disponible en el catálogo.
     string temporada;
+    int cantidad_vendida;
 };
 
 struct inventario_ropa {
@@ -84,7 +87,8 @@ vector<compra_inventario> historial_compras;
 vector<pedidos> compras;
 vector <evento> eventos;
 
-double presupuesto = 10000.0; // presupuesto inicial
+double presupuesto = 25000.0; // presupuesto inicial
+int contador_jornadas = 0; // contador de dias de jornada
 
 // Declaración de funciones
 void inicioSesionEmpleado(vector<empleado> &registro_empleado);
@@ -107,7 +111,9 @@ void VerHistorialCompras();
 void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario);
 void GenerarCliente(vector<cliente> &clientes, int cantidad_clientes);
 void GenerarEvento(evento &nuevoEvento);
+
 void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, evento eventoDelDia);
+void verReportes(const vector<cliente> &clientes,vector<catalogo_ropa> &catalogo);
 
 // Primer Menu
 void inicio() {
@@ -121,7 +127,7 @@ void inicio() {
     cout << "\t  3.- Creditos" << endl;
     cout << "\t  4.- Salir" << endl;
     cout << "--------------------------------------------" << endl;
-    cout << "\n\n\nOpcion: ";
+    cout << "\nOpcion: ";
 }
 
 void menu_Inicio(vector<empleado> &registro_empleado) {
@@ -132,18 +138,23 @@ void menu_Inicio(vector<empleado> &registro_empleado) {
         switch (opcion) {
             case 1:
                 inicioSesionEmpleado(registro_empleado);
+                system("pause");
                 break;
             case 2:
                 registroEmpleado(registro_empleado);
+                system("pause");
                 break;
             case 3:
                 cout << "Creditos" << endl;
+                system("pause");
                 break;
             case 4:
                 cout << "Gracias por usar Tendencia Total..." << endl;
+                system("pause");
                 break;
             default:
                 cout << "Opcion no valida" << endl;
+                system("pause");
                 break;
         }
     } while (opcion != 4);
@@ -154,7 +165,7 @@ void registroEmpleado(vector<empleado> &registro_empleado) {
     empleado empleado_aux;
 
     cout << "--------------------------------------------" << endl;
-    cout << "\t Registrarse" << endl;
+    cout << "\t \t Registrarse" << endl;
     cout << "--------------------------------------------" << endl;
 
     empleado_aux.codigo_empleado = registro_empleado.size() + 1;
@@ -282,7 +293,7 @@ void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &i
     string codigo;
     int cantidad;
 
-    cout << "\nIngrese el código del producto a agregar al catálogo: ";
+    cout << "\nIngrese el codigo del producto a agregar al catalogo: ";
     cin >> codigo;
     cout << "Ingrese la cantidad a transferir: ";
     cin >> cantidad;
@@ -295,11 +306,59 @@ void AgregarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &i
                                        cantidad, item.temporada};
                 catalogo.push_back(nuevo);
                 item.cantidad -= cantidad;
-
-                cout << "Producto agregado al catálogo.\n";
+                cout << "Producto agregado al catalogo.\n";
                 return;
             } else {
                 cout << "Cantidad insuficiente en el inventario.\n";
+                return;
+            }
+        }
+    }
+    cout << "Codigo no encontrado en el inventario.\n";
+    guardarInventario(inventario);
+}
+
+void QuitarCatalogo(vector<catalogo_ropa> &catalogo, vector<inventario_ropa> &inventario) {
+    string codigo;
+    int cantidad;
+
+    cout << "\nIngrese el codigo del producto a quitar del catalogo: ";
+    cin >> codigo;
+    cout << "Ingrese la cantidad a devolver al inventario ";
+    cin >> cantidad;
+    for (auto &item : catalogo) {
+        if (item.codigo_ropa == codigo) {
+            if (item.cantidad >= cantidad) {
+
+                if (item.cantidad == cantidad) {
+                    for (auto &item : inventario) {
+                             if (item.codigo_ropa == codigo) {
+                                 item.cantidad += cantidad;
+                        }
+                    }
+                    for (auto it = catalogo.begin(); it != catalogo.end(); ++it) {
+                        if (it->codigo_ropa == codigo) {
+                            catalogo.erase(it);
+                            
+                            cout << "Articulo eliminado exitosamente.\n";
+                            return;
+                        }
+                    }
+                        
+                }
+                else {
+                    for (auto &item : inventario) {
+                             if (item.codigo_ropa == codigo) {
+                                 item.cantidad += cantidad;
+                        }
+                    }
+
+                    item.cantidad -= cantidad; //borrar
+                }
+                cout << "Producto quitado exitosamente del catalogo.\n";
+                return;
+            } else {
+                cout << "Cantidad no existente en el catalogo.\n";
                 return;
             }
         }
@@ -367,14 +426,15 @@ void HacerPedido(vector<inventario_ropa> &inventario, vector<compra_inventario> 
     cout << "--------------------------------------------" << endl;
     cout << "\t Hacer Pedido" << endl;
     cout << "--------------------------------------------" << endl;
+    cout << "Presupuesto disponible: $" << presupuesto << endl;
 
-    cout << "\n\nIngrese el código de la ropa a comprar (o nuevo código si no existe): ";
+    cout << "\n\nIngrese el codigo de la ropa a comprar (o nuevo codigo si no existe): ";
     cin >> codigo;
 
     // Buscar si el artículo ya existe en el inventario
     for (auto &item : inventario) {
         if (item.codigo_ropa == codigo) {
-            cout << "El artículo ya existe en el inventario.\n";
+            cout << "El articulo ya existe en el inventario.\n";
             cout << "Ingrese la cantidad que desea comprar: ";
             cin >> cantidad;
 
@@ -397,10 +457,10 @@ void HacerPedido(vector<inventario_ropa> &inventario, vector<compra_inventario> 
 
     // Si no existe, crear un nuevo artículo
     inventario_ropa nuevo_item;
-    cout << "El artículo no existe. Vamos a crearlo.\n";
+    cout << "El articulo no existe. Vamos a crearlo.\n\n";
     nuevo_item.codigo_ropa = codigo;
 
-    cout << "Ingrese la categoría: ";
+    cout << "Ingrese la categoria: ";
     cin.ignore();
     getline(cin, nuevo_item.categoria);
     cout << "Ingrese la marca: ";
@@ -413,7 +473,7 @@ void HacerPedido(vector<inventario_ropa> &inventario, vector<compra_inventario> 
     cin >> nuevo_item.costo_unitario;
     cout << "Ingrese la cantidad a comprar: ";
     cin >> cantidad;
-
+    
     double total_costo = nuevo_item.costo_unitario * cantidad;
     if (presupuesto >= total_costo) {
         nuevo_item.cantidad = cantidad;
@@ -426,10 +486,10 @@ void HacerPedido(vector<inventario_ropa> &inventario, vector<compra_inventario> 
         historial_compras.push_back({codigo, nuevo_item.categoria, nuevo_item.marca, nuevo_item.talla, 
                                      nuevo_item.costo_unitario, cantidad, total_costo});
 
-        cout << "Nuevo artículo agregado al inventario.\n";
-        cout << "Compra realizada exitosamente. Presupuesto restante: $" << presupuesto << "\n";
+        cout << endl << "Nuevo articulo agregado al inventario.\n";
+        cout << endl <<"Compra realizada exitosamente. Presupuesto restante: $" << presupuesto << "\n";
     } else {
-        cout << "Presupuesto insuficiente para crear este artículo.\n";
+        cout << endl <<"Presupuesto insuficiente para crear este articulo.\n";
     }
     guardarInventario(inventario);
     guardarHistorialCompras(historial_compras);
@@ -451,10 +511,11 @@ void guardarHistorialCompras(const vector<compra_inventario> &historial_compras)
     archivo.close();
 }
 
+
 void VerHistorialCompras() {
     ifstream archivo("compras.txt");
     if (!archivo) {
-        cout << "No se pudo abrir el archivo de compras o aún no hay historial registrado.\n";
+        cout << "No se pudo abrir el archivo de compras o aun no hay historial registrado.\n";
         return;
     }
 
@@ -467,8 +528,8 @@ void VerHistorialCompras() {
     int cantidad;
 
     while (archivo >> codigo_ropa >> categoria >> marca >> talla >> costo_unitario >> cantidad >> total_costo) {
-        cout << "\nCódigo de ropa: " << codigo_ropa << endl;
-        cout << "Categoría: " << categoria << endl;
+        cout << "\nCodigo de ropa: " << codigo_ropa << endl;
+        cout << "Categoria: " << categoria << endl;
         cout << "Marca: " << marca << endl;
         cout << "Talla: " << talla << endl;
         cout << "Costo unitario: $" << costo_unitario << endl;
@@ -499,7 +560,7 @@ void GenerarCliente(vector<cliente> &clientes, int cantidad_clientes) {
 }
 
 void GenerarEvento(evento &nuevoEvento) {
-    const vector<string> tiposEventos = {"Descuento Especial", "Escasez de Productos", "Promoción Relámpago"};
+    const vector<string> tiposEventos = {"Descuento Especial", "Escasez de Productos", "Promocion Relampago"};
     const vector<double> impactoVentas = {1.2, 0.8, 1.5}; // Incremento/decremento en ventas
     const vector<double> impactoInventario = {0.9, 0.7, 1.3}; // Cambio en inventario
 
@@ -519,8 +580,9 @@ void GenerarEvento(evento &nuevoEvento) {
 
 void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, evento eventoDelDia) {
     for (auto &cliente : clientes) {
+        cliente.total_productos = 0;
         if (cliente.presupuesto <= 0) continue; // Cliente sin presupuesto
-
+        
         for (auto &producto : catalogo) {
             // Probabilidad de compra según tipo de cliente
             double probabilidad = 
@@ -540,15 +602,90 @@ void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, 
 
                     // Actualizar inventario
                     producto.cantidad -= cantidadCompra;
+                    producto.cantidad_vendida += cantidadCompra; //para reporte de producto mas popular
+                    /*if (producto.cantidad <= 5) {
+                        producto_a_abastecer =
+                    }
+                     if (producto.cantidad == 0) {
+                    // Crear una copia del producto a eliminar
+                        auto producto_a_eliminar = producto;
 
+                        // Buscar y eliminar el producto del catálogo
+                        catalogo.erase(std::remove_if(catalogo.begin(), catalogo.end(),
+                                                    [&producto_a_eliminar](const catalogo_ropa& p) {
+                                                        return p.codigo_ropa == producto_a_eliminar.codigo_ropa;
+                                                    }),
+                                    catalogo.end());
+                    }*/
+                    // Actualizar inventario y cantidad vendida
+                 
+                    
                     // Mostrar compra
-                    cout << "Cliente " << cliente.codigo_cliente << " compró " 
+                    cout << "\nCliente " << cliente.codigo_cliente <<" ("<<cliente.tipo_cliente<< ") compro " 
                          << cantidadCompra << " de " << producto.codigo_ropa 
-                         << " por $" << totalCompra << ".\n";
+                         << " por " <<"------------ $"<< totalCompra <<".\n";
 
                     presupuesto += totalCompra;
+                    cliente.total_productos += cantidadCompra;
                 }
             }
+        }
+        
+    }
+
+}
+
+void verReportes(const vector<cliente> &clientes,vector<catalogo_ropa> &catalogo) {
+    double gasto_maximo = 0.0;
+    int cliente_con_mayor_gasto = 0;
+    int max_compras = 0;
+
+    //Producto mas popular
+    // Encontrar el producto más vendido
+    int cantidad_maxima_vendida = 0;
+
+    cout << "\nProducto(s) mas populares:" << endl;
+
+    for (const auto& producto : catalogo) {
+        if (producto.cantidad_vendida > cantidad_maxima_vendida) {
+            cantidad_maxima_vendida = producto.cantidad_vendida;
+            cout << "  - " << producto.codigo_ropa << " (" <<cantidad_maxima_vendida << " unidades):" << endl;
+        } else if (producto.cantidad_vendida == cantidad_maxima_vendida) {
+            cout << "  - " << producto.codigo_ropa << endl;
+        }
+    }
+
+    
+    //Cliente con mas cantidad de compras:
+    for (const auto& cliente : clientes) {
+        max_compras = std::max(max_compras, cliente.total_productos);
+    }
+
+    // Encontrar a los clientes con el máximo número de compras
+    cout << "\nClientes que compraron mas productos:" << endl;
+    for (const auto& cliente : clientes) {
+        if (cliente.total_productos == max_compras) {
+            cout << "  - Cliente " << cliente.codigo_cliente <<endl;
+        }
+    }
+    cout<<endl;
+
+    //cliente que mas gasto
+
+    for (cliente cliente : clientes) {
+        if (cliente.total_gastado > gasto_maximo) {
+            gasto_maximo = cliente.total_gastado;
+            cliente_con_mayor_gasto = clientes.size(); // Actualizamos el índice del cliente con mayor gasto
+        }
+    }
+    
+    cout << "Cliente con mayor gasto: " << endl;
+    cout << "  - Cliente " << clientes[cliente_con_mayor_gasto].codigo_cliente <<endl;
+
+    cout << "\nArticulos a reabastecer:" << endl;
+    for (const auto& producto : catalogo) {
+        if (producto.cantidad <= 5) {
+            cout << "  - " << producto.codigo_ropa << " (" << producto.cantidad << " unidades)\n" << endl;
         }
     }
 }
@@ -558,7 +695,7 @@ void delay (int segundos) {
     while (clock() < start_time + segundos * CLOCKS_PER_SEC/1000) {}
 }
 void mostrarBarraProgreso(int duracion) {
-    const int total = 50;
+    const int total = 40;
     int intervalo = duracion / total;
 
     cout << "Progreso: [";
@@ -576,7 +713,7 @@ void CicloDiario(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo){
     GenerarEvento(eventoDelDia);
 
     cout << "--------------------------------------------" << endl;
-    cout << "Iniciando Dia" << endl;
+    cout << "Iniciando Dia -" << contador_jornadas + 1 << "-" << endl;
 
     if (eventoDelDia.tipo != "Sin Evento") {
         cout << "\n\nEvento del dia: " << eventoDelDia.tipo << endl;
@@ -596,7 +733,7 @@ void CicloDiario(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo){
     cout << "\n--Quisiera pasar al final de la jornada?--" << endl;
 
     cout << "\t  1.- Si    2.- No" << endl;
-    cout << "\n\nOpción: ";
+    cout << "\nOpcion: ";
 
     int opcion;
     cin >> opcion;
@@ -615,36 +752,34 @@ void CicloDiario(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo){
 
 
 void imprimirMenuEmpleado(const empleado &empleado_activo){
-    cout << "--------------------------------------------" << endl;
-    cout << "\tBienvenido " << empleado_activo.nombre_empleado << endl;
+    cout << "--------------------------------------------------------------" << endl;
+    cout << "\n\t   Bienvenido " << empleado_activo.nombre_empleado <<endl;
+    cout << "\tLe desea Tendencia Total";
     cout << "\n\t\tMenu" << endl;
-    cout << "--------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------" << endl;    
     cout << "\t  1.- Ver Perfil" << endl;
     cout << "\t  2.- Instrucciones" << endl;
     cout << "\t  3.- Planificacion antes de la jornada" << endl;
-    //cout << "\t\t  3.1.- Ver catalogo" << endl;
-    //cout << "\t\t  3.2.- Ver Stock" << endl;
-    //cout << "\t\t  3.3.- Comprar Articulos" << endl;
-    //cout << "\t\t  3.4.- Colocar Articulos" << endl;
-    //cout << "\t\t  3.5.- Mis Pedidos" << endl;
     cout << "\t  4.- Ver Historial de Compras" << endl;
     cout << "\t  5.- Iniciar Jornada" << endl;
     cout << "\t  6.- Cerrar Sesion" << endl;
     cout << "--------------------------------------------" << endl;
-    cout << "\n\n\nOpcion: ";
-}void imprimirMenuSubmenu() {
+    cout << "\nOpcion: ";
+}
+void imprimirMenuSubmenu() {
     cout << "--------------------------------------------" << endl;
-    cout << "\tPlanificación antes de la jornada" << endl;
+    cout << "\tPlanificacion antes de la jornada" << endl;
     cout << "--------------------------------------------" << endl;
     cout << "\t\t\t\tDisponible: $" << presupuesto << endl;
-    cout << "\t  1.- Ver catálogo" << endl;
-    cout << "\t  2.- Ver inventario" << endl;
-    cout << "\t  3.- Comprar artículos" << endl;
-    cout << "\t  4.- Colocar artículos" << endl;
-    cout << "\t  5.- Mis pedidos" << endl;
-    cout << "\t  6.- Volver al menú principal" << endl;
+    cout << "\t  1.- Ver catalogo" << endl; //tienda: mercancia a la venta y vista de los clientes
+    cout << "\t  2.- Ver inventario" << endl;  // stock de la tienda, unidaes disponibles y guardadas
+    cout << "\t  3.- Comprar articulos" << endl;  // comprar y registra ropa del proveedor
+    cout << "\t  4.- Colocar articulos" << endl;  // agregar artaculos del inventario al catalogo
+    cout << "\t  5.- Mis pedidos" << endl; //??? similar o igual a stock, muestra historial de compras a nuestro proveedor
+    cout << "\t  6.- Quitar del catalogo" << endl;
+    cout << "\t  7.- Volver al menu principal" << endl;
     cout << "--------------------------------------------" << endl;
-    cout << "\n\n\nOpción: ";
+    cout << "\n\nOpcion: ";
 }
 
 void ImprimirmenuFinJornada(){
@@ -653,11 +788,11 @@ void ImprimirmenuFinJornada(){
     cout << "--------------------------------------------" << endl;
     cout << "\t  1.- Ver Reportes" << endl;
     cout << "\t  2.- Logros del dia" << endl;
-    cout << "\t  3.- Comprar artículos" << endl;
-    cout << "\t  5.- Mis pedidos" << endl;
-    cout << "\t  6.- Siguiente dia" << endl;
+    cout << "\t  3.- Comprar articulos" << endl;
+    cout << "\t  4.- Mis pedidos" << endl;
+    cout << "\t  5.- Siguiente dia" << endl;
     cout << "--------------------------------------------" << endl;
-    cout << "\n\n\nOpción: ";
+    cout << "\nOpcion: ";
 }
 
 void SubmenuEmpleado() {
@@ -669,35 +804,46 @@ void SubmenuEmpleado() {
             case 1:
                 //cout << "Ver catálogo" << endl;
                 VerCatalogo(catalogo);
+                system("pause");
                 break;
             case 2:
                 //cout << "Ver inventario" << endl;
                 VerInventario(inventario);
+                system("pause");
                 // Agregar lógica específica aquí
                 break;
             case 3:
                 //cout << "Comprar artículos" << endl;
                 HacerPedido(inventario, historial_compras, presupuesto);
+                system("pause");
                 // Agregar lógica específica aquí
                 break;
             case 4:
                 //cout << "Colocar artículos" << endl;
                 AgregarCatalogo(catalogo, inventario);
+                system("pause");
                 // Agregar lógica específica aquí
                 break;
             case 5:
                 //cout << "Mis pedidos" << endl;
                 // Agregar lógica específica aquí
                 VerHistorialCompras();
+                system("pause");
                 break;
             case 6:
-                cout << "Volviendo al menú principal..." << endl;
+                QuitarCatalogo(catalogo, inventario);
+                system("pause");
+                break;
+            case 7:
+                cout << "Volviendo al menu principal..." << endl;
+                system("pause");
                 break;
             default:
-                cout << "Opción no válida." << endl;
+                cout << "Opcion no válida." << endl;
+                system("pause");
                 break;
         }
-    } while (opcion != 6);
+    } while (opcion != 7);
 }
 
 void menuEmpleado(empleado &empleado_activo) {
@@ -714,29 +860,44 @@ void menuEmpleado(empleado &empleado_activo) {
                 cout << "\t\tApellido: " << empleado_activo.apellido_empleado << endl;
                 cout << "\t\tEdad: " << empleado_activo.edad << endl;
                 cout << "\t\tCorreo: " << empleado_activo.correo << endl;
-                cout << "\t\tTeléfono: " << empleado_activo.telefono << endl;
+                cout << "\t\tTelefono: " << empleado_activo.telefono << endl;
                 cout << "\n" << endl;
+                system("pause");
                 break;
             case 2:
-                cout << "Instrucciones" << endl;
+                cout << "\n\n--------------------------------------------" << endl; 
+                cout <<"\n \tInstrucciones\t"<< endl;
+                cout << "\n--------------------------------------------" << endl;
+                cout << "- Planifica tu dia:  Analiza las tendencias y elige las prendas perfectas para tu tienda."<<endl;
+                cout << "- Atiende a tus clientes:  Ayuda a cada cliente a encontrar el estilo perfecto y gana dinero."<<endl;
+                cout << "- Mejora tu tienda:  Invierte tus ganancias para ampliar tu inventario y decorar tu tienda."<<endl;
+                cout << "- Conquista el mundo de la moda:  Desbloquea nuevos niveles, supera desafios y conviertete "<<endl;
+                cout << "en el diseniador mas famoso.\n"<<endl;
+                system("pause");
                 break;
             case 3:
                 //cout << "Planificación antes de la jornada" << endl;
                 SubmenuEmpleado(); // Llamada corregida
+                system("pause");
                 break;
             case 4:
-                cout << "Ver historial de compras" << endl;
+                //cout << "Ver historial de compras" << endl;
                 VerHistorialCompras();
+                system("pause");
                 break;
             case 5:
                 //cout << "Iniciar jornada" << endl;
                 CicloDiario(clientes, catalogo);
+                system("pause");
                 break;
             case 6:
-                cout << "Cerrando sesión..." << endl;
+                cout << "Cerrando sesion..." << endl;
+                contador_jornadas = 0;
+                system("pause");
                 break;
             default:
-                cout << "Opción no válida." << endl;
+                cout << "Opcion no valida." << endl;
+                system("pause");
                 break;
         }
     } while (opcion != 6);
@@ -749,33 +910,55 @@ void menuFinJornada(){
         cin >> opcion;
         switch (opcion) {
             case 1:
-                cout << "Ver reportes" << endl;
+                //cout << "Reportes del dia" << endl;
+                    verReportes(clientes , catalogo);
+                system("pause");
                 break;
             case 2:
-                cout << "Logros del dia" << endl;
+                cout << "\n\n--------------------------------------------" << endl; 
+                cout << "Logros y Metas" << endl;
+                cout << "--------------------------------------------" << endl; 
+
+                cout << "Vendedor Novato: Realiza tus primeras ventas. (bloqueado)\n";
+                cout << "Vendedor Experimentado: Alcanza las 100 ventas en un día. (bloqueado)\n";
+                cout << "Millonario: Supera las 10000 unidades monetarias en ventas totales en ventas diarias. (bloqueado)\n";
+                cout << "Cliente Fiel: Consigue un cliente que realice 5 compras consecutivas. (bloqueado)\n";
+                cout << "Mayorista: Realiza una venta de más de 10 unidades de un mismo producto. (bloqueado)\n";
+                cout << "Experto en Categorías: Vende al menos un producto de cada categoría. (bloqueado)\n";
+                cout << "Coleccionista: Completa tu catálogo de productos.(bloqueado)\n";
+                cout << "Veterano: Completa 100 jornadas de trabajo. (bloqueado)\n";
+                cout << "Invencible: No te quedes sin stock durante un mes. (bloqueado)\n";
+              
+                system("pause");
                 break;
             case 3:
-                cout << "Comprar artículos" << endl;
+                //cout << "Comprar articulos" << endl;
+                HacerPedido(inventario, historial_compras, presupuesto);
+                system("pause");
                 break;
             case 4:
-                cout << "Mis pedidos" << endl;
+                //cout << "Mis pedidos" << endl;
+                VerHistorialCompras();
+                system("pause");
                 break;
             case 5:
-                cout << "Siguiente dia" << endl;
-                break;
-            case 6: 
-                cout << "Volviendo al menú principal..." << endl;
+                contador_jornadas++;
+                cout << "Jornada -" << contador_jornadas << "- finalizada" << endl;
+                cout << "Pasando a la siguiente dia..." << endl;
+                
                 break;
             default:
-                cout << "Opción no válida." << endl;
+                cout << "Opcion no valida." << endl;
+                system("pause");
                 break;
         }
-    } while (opcion != 6);
+    } while (opcion != 5);
 }
 
 // Función principal
 int main() {
 
+    system("color d");
     GenerarCliente (clientes, rand() % 30 + 20);
     cargarEmpleados(registro_empleado);
     cargarInventario(inventario);
