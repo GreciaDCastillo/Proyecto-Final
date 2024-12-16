@@ -426,6 +426,7 @@ void HacerPedido(vector<inventario_ropa> &inventario, vector<compra_inventario> 
     cout << "--------------------------------------------" << endl;
     cout << "\t Hacer Pedido" << endl;
     cout << "--------------------------------------------" << endl;
+    cout << "Presupuesto disponible: $" << presupuesto << endl;
 
     cout << "\n\nIngrese el codigo de la ropa a comprar (o nuevo codigo si no existe): ";
     cin >> codigo;
@@ -559,80 +560,83 @@ void GenerarCliente(vector<cliente> &clientes, int cantidad_clientes) {
 }
 
 void GenerarEvento(evento &nuevoEvento) {
-    const vector<string> tiposEventos = {"Descuento Especial", "Escasez de Productos", "Promocion Relampago"};
-    const vector<double> impactoVentas = {1.2, 0.8, 1.5}; // Incremento/decremento en ventas
-    const vector<double> impactoInventario = {0.9, 0.7, 1.3}; // Cambio en inventario
+srand(time(nullptr)); // Inicializar el generador de números aleatorios
+    int probabilidad = rand() % 100; // Generar un número entre 0 y 99
 
-    if (rand() % 2 == 0) { // 50% de probabilidad de ocurrencia
-        int indice = rand() % tiposEventos.size();
-        nuevoEvento.tipo = tiposEventos[indice];
-        nuevoEvento.duracion = rand() % 3 + 1; // Duración de 1 a 3 días
-        nuevoEvento.impacto_ventas = impactoVentas[indice];
-        nuevoEvento.impacto_inventario = impactoInventario[indice];
+    if (probabilidad < 30) { // 30% de probabilidad de que ocurra un evento
+        int tipoEvento = rand() % 3; // Elegir entre 3 posibles tipos de evento
+        switch (tipoEvento) {
+            case 0:
+                nuevoEvento.tipo = "Rebaja Especial";
+                nuevoEvento.impacto_ventas = 1.5; // Incremento del 50% en ventas
+                nuevoEvento.impacto_inventario = 1.2; // Mayor salida de inventario
+                break;
+            case 1:
+                nuevoEvento.tipo = "Clima Desfavorable";
+                nuevoEvento.impacto_ventas = 0.7; // Reducción del 30% en ventas
+                nuevoEvento.impacto_inventario = 1.0; // Inventario no cambia
+                break;
+            case 2:
+                nuevoEvento.tipo = "Festividad Local";
+                nuevoEvento.impacto_ventas = 2.0; // Ventas se duplican
+                nuevoEvento.impacto_inventario = 1.5; // Mayor salida de inventario
+                break;
+        }
     } else {
         nuevoEvento.tipo = "Sin Evento";
-        nuevoEvento.duracion = 0;
-        nuevoEvento.impacto_ventas = 1.0;
-        nuevoEvento.impacto_inventario = 1.0;
+        nuevoEvento.impacto_ventas = 1.0; // Sin cambios en ventas
+        nuevoEvento.impacto_inventario = 1.0; // Sin cambios en inventario
     }
 }
 
 void SimularCompras(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo, evento eventoDelDia) {
     for (auto &cliente : clientes) {
-        cliente.total_productos = 0;
-        if (cliente.presupuesto <= 0) continue; // Cliente sin presupuesto
-        
+        cliente.total_productos = 0; // Reiniciar el contador de productos comprados por el cliente
+        if (cliente.presupuesto <= 0) continue; // Saltar cliente sin presupuesto
+
         for (auto &producto : catalogo) {
-            // Probabilidad de compra según tipo de cliente
-            double probabilidad = 
-                                   cliente.tipo_cliente == "Premium" ? 0.9 : // 90%
-                                   cliente.tipo_cliente == "Raro" ? 0.8 : // 80%
-                                   cliente.tipo_cliente == "Frecuente" ? 0.5 : 0.3; // 30%
-            
-            if ((rand() % 100) < (probabilidad * 100) && cliente.presupuesto >= producto.precio_unitario) {
-                int cantidadCompra = min(rand() % 3 + 1, producto.cantidad); // Compra de 1 a 3 unidades
+            // Determinar la probabilidad de compra según el tipo de cliente
+            double probabilidad =
+                cliente.tipo_cliente == "Premium" ? 0.9 : // 90%
+                cliente.tipo_cliente == "Raro" ? 0.8 :    // 80%
+                cliente.tipo_cliente == "Frecuente" ? 0.5 : 0.3; // 50% o 30%
+
+            // ¿El cliente compra este producto? Considerar la probabilidad
+            if ((rand() % 100) < (probabilidad * 100) && 
+                cliente.presupuesto >= producto.precio_unitario) {
+
+                // Determinar la cantidad a comprar (máximo disponible o presupuesto limitado)
+                int cantidadCompra = min(rand() % 3 + 1, producto.cantidad); // Entre 1 y 3 unidades
                 if (cantidadCompra > 0) {
+                    // Calcular el costo total de la compra
                     double totalCompra = cantidadCompra * producto.precio_unitario * eventoDelDia.impacto_ventas;
 
-                    // Actualizar datos del cliente
-                    cliente.presupuesto -= totalCompra;
-                    cliente.total_gastado += totalCompra;
-                    cliente.numero_visitas++;
+                    // Verificar si el cliente tiene suficiente presupuesto
+                    if (cliente.presupuesto >= totalCompra) {
+                        // Actualizar datos del cliente
+                        cliente.presupuesto -= totalCompra;
+                        cliente.total_gastado += totalCompra;
+                        cliente.total_productos += cantidadCompra;
+                        cliente.numero_visitas++;
 
-                    // Actualizar inventario
-                    producto.cantidad -= cantidadCompra;
-                    producto.cantidad_vendida += cantidadCompra; //para reporte de producto mas popular
-                    /*if (producto.cantidad <= 5) {
-                        producto_a_abastecer =
+                        // Actualizar inventario del producto
+                        producto.cantidad -= cantidadCompra;
+                        producto.cantidad_vendida += cantidadCompra; // Para reporte del producto más vendido
+
+                        // Mostrar detalles de la compra
+                        cout << "\nCliente " << cliente.codigo_cliente << " (" << cliente.tipo_cliente << ") compro "
+                             << cantidadCompra << " de " << producto.codigo_ropa
+                             << " por " << "------------ $" << totalCompra << ".\n";
+
+                        // Agregar al presupuesto global
+                        presupuesto += totalCompra;
                     }
-                     if (producto.cantidad == 0) {
-                    // Crear una copia del producto a eliminar
-                        auto producto_a_eliminar = producto;
-
-                        // Buscar y eliminar el producto del catálogo
-                        catalogo.erase(std::remove_if(catalogo.begin(), catalogo.end(),
-                                                    [&producto_a_eliminar](const catalogo_ropa& p) {
-                                                        return p.codigo_ropa == producto_a_eliminar.codigo_ropa;
-                                                    }),
-                                    catalogo.end());
-                    }*/
-                    // Actualizar inventario y cantidad vendida
-                 
-                    
-                    // Mostrar compra
-                    cout << "\nCliente " << cliente.codigo_cliente <<" ("<<cliente.tipo_cliente<< ") compro " 
-                         << cantidadCompra << " de " << producto.codigo_ropa 
-                         << " por " <<"------------ $"<< totalCompra <<".\n";
-
-                    presupuesto += totalCompra;
-                    cliente.total_productos += cantidadCompra;
                 }
             }
         }
-        
     }
-
 }
+
 
 void verReportes(const vector<cliente> &clientes,vector<catalogo_ropa> &catalogo) {
     double gasto_maximo = 0.0;
@@ -708,6 +712,7 @@ void mostrarBarraProgreso(int duracion) {
 }
 
 void CicloDiario(vector<cliente> &clientes, vector<catalogo_ropa> &catalogo){
+    int contador_jornadas = 0;
     evento eventoDelDia;
     GenerarEvento(eventoDelDia);
 
